@@ -58,7 +58,13 @@ for (const surface of ['desktop', 'terminal'] as const) {
     const vue = await $.ui.mount({ plugin: 'la-jauge', surface, component: 'AbovePrompt', props: PROPS })
 
     expect(await vue.find({ text: /Contexte/ })).toBeDefined()
+    // Les trois barres sont là, vides, en attendant la première réponse
+    expect(await vue.find({ text: /Limite 5 h/ })).toBeDefined()
+    expect(await vue.find({ text: /7 jours/ })).toBeDefined()
+    if (surface === 'desktop') {
+      expect((await vue.findAll({ type: 'Svg' })).length).toBe(9)
+    }
     await vue.press({ key: 'ouvrir-Contexte' })
-    expect(await vue.find({ text: /—/ })).toBeDefined()
+    expect((await vue.findAll({ text: /—/ })).length).toBeGreaterThanOrEqual(3)
   })
 }

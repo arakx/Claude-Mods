@@ -771,10 +771,10 @@ export const register: Register = on => {
         <Box flexDirection="row" alignItems="center">
           {caseG(GRILLE.etiquette, libelle('Contexte'))}
           {caseG(GRILLE.barre, jauge(ctx ?? 0, couleurContexte(ctx ?? 0), GRILLE.barre))}
-          {caseG(GRILLE.etiquette, h5 && libelle('Limite 5 h'))}
-          {caseG(GRILLE.barre, h5 && jauge(h5.percentUsed, couleur(h5.percentUsed), GRILLE.barre))}
-          {caseG(GRILLE.etiquette, j7 && libelle('7 jours'))}
-          {caseG(GRILLE.barre, j7 && jauge(j7.percentUsed, couleur(j7.percentUsed), GRILLE.barre))}
+          {caseG(GRILLE.etiquette, libelle('Limite 5 h'))}
+          {caseG(GRILLE.barre, jauge(h5?.percentUsed ?? 0, couleur(h5?.percentUsed ?? 0), GRILLE.barre))}
+          {caseG(GRILLE.etiquette, libelle('7 jours'))}
+          {caseG(GRILLE.barre, jauge(j7?.percentUsed ?? 0, couleur(j7?.percentUsed ?? 0), GRILLE.barre))}
           <Box width={pc(GRILLE.droite)} flexDirection="row" justifyContent="flex-end">
             {relais}
           </Box>
@@ -790,8 +790,8 @@ export const register: Register = on => {
                 m.contextWindow > 0 ? `${tokensCourts(m.contextTokens ?? 0)}/${tokensCourts(m.contextWindow)}` : undefined,
               ),
             )}
-            {caseG(GRILLE.etiquette + GRILLE.barre, h5 && valeur('Limite 5 h', h5.percentUsed, couleur(h5.percentUsed), reste(h5)))}
-            {caseG(GRILLE.etiquette + GRILLE.barre, j7 && valeur('7 jours', j7.percentUsed, couleur(j7.percentUsed), reste(j7)))}
+            {caseG(GRILLE.etiquette + GRILLE.barre, valeur('Limite 5 h', h5?.percentUsed, couleur(h5?.percentUsed ?? 0), reste(h5)))}
+            {caseG(GRILLE.etiquette + GRILLE.barre, valeur('7 jours', j7?.percentUsed, couleur(j7?.percentUsed ?? 0), reste(j7)))}
             <Box width={pc(GRILLE.droite)} flexDirection="row" justifyContent="flex-end">
               {m.costUsd !== undefined && (
                 <Button key="valeur-Session" plain onPress={basculer}>
