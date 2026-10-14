@@ -1,0 +1,7 @@
+{
+  "name": "plume",
+  "version": "0.1.0",
+  "description": "Plume : un bouton « Améliorer le prompt » au-dessus du champ, qui remet ta demande au propre avant l'envoi.",
+  "author": { "name": "Arakx" },
+  "types": "./types/index.d.ts"
+}

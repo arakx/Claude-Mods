@@ -8,6 +8,7 @@ Dans Claude Code, depuis un terminal :
 
 ```
 /plugin install la-jauge --marketplace arakx/Claude-Mods
+/plugin install plume --marketplace arakx/Claude-Mods
 ```
 
 La première fois, Claude Code demande d'ajouter le dépôt : répondre `y`, puis choisir la portée (utilisateur par défaut).
@@ -41,7 +42,7 @@ Contexte  ━━━━━━━━━━   Limite 5 h  ━━━━━━━━�
 ### Les jauges
 
 - **Contexte** : remplissage de la fenêtre de contexte — vert jusqu'à 30 %, jaune jusqu'à 40 %, orange jusqu'à 50 %, rouge au-delà.
-- **Limite 5 h** et **7 jours** : consommation de l'abonnement et temps avant réinitialisation (↻) — orange à 70 %, rouge à 90 %. Visibles avec un abonnement Claude, après la première réponse.
+- **Limite 5 h** et **7 jours** : consommation de l'abonnement et temps avant réinitialisation (↻) — orange à 70 %, rouge à 90 %. Avec un abonnement Claude ; barres vides jusqu'à la première réponse de la session.
 - **Session** : coût de la session.
 
 ### Le Relais : une passation, puis une conversation neuve
@@ -58,3 +59,15 @@ Contexte  ━━━━━━━━━━   Limite 5 h  ━━━━━━━━�
 - `/jauge-demo` : faire défiler toutes les couleurs avec des valeurs fictives pendant 12 secondes.
 
 Sur l'app de bureau, les barres sont des capsules arrondies ; dans un terminal, une fine ligne de couleur.
+
+## Plume (`plume`)
+
+Une ligne sous la bande, au-dessus du champ : **✎ Améliorer le prompt**.
+
+1. Tape ou dicte ta demande comme elle vient, en vrac.
+2. Clique sur **✎ Améliorer le prompt** : Claude la remet au propre (idées dans l'ordre, répétitions retirées, rien d'inventé, même langue) et la version propre **remplace le brouillon dans le champ**.
+3. Relis, puis Entrée. **↶ Revenir à l'original** remet le texte de départ ; **Annuler** arrête la mise au propre en cours.
+
+- `/plume` : afficher ou masquer la ligne.
+
+La réécriture passe par le modèle Sonnet, avec le compte de la session.

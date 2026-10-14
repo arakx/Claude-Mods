@@ -7,6 +7,11 @@
       "name": "la-jauge",
       "source": "./la-jauge",
       "description": "Une bande au-dessus de la saisie : la progression des tâches de tous tes chats, le contexte, les limites 5 h et 7 jours, et le Relais pour repartir d'une conversation neuve"
+    },
+    {
+      "name": "plume",
+      "source": "./plume",
+      "description": "Un bouton « Améliorer le prompt » au-dessus du champ, qui remet ta demande au propre avant l'envoi"
     }
   ]
 }
