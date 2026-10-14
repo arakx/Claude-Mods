@@ -183,8 +183,9 @@ export const register: Register = on => {
     const etape = await read($, demo)
     const maintenant = (await read($, now)) || (await $.clock.now())
     const m = etape === null ? ((await read($, mesure)) ?? VIDE) : mesureDemo(etape, maintenant)
+    const dessous = await next(e)
     if (e.props.hasSurvey || (await read($, isHidden))) {
-      return next(e)
+      return dessous
     }
     const ouvert = await read($, isOpen)
     const table = $.ui.resolve(e)
@@ -235,45 +236,49 @@ export const register: Register = on => {
     const limites = [...m.limites].sort((a, b) => ordre(a) - ordre(b))
 
     return (
-      <Box flexDirection="row" alignItems="flex-start" columnGap={3}>
-        <Box flexDirection="row" alignItems="flex-start" columnGap={3} flexGrow={1}>
-          {colonne(
-            'Contexte',
-            ctx,
-            couleurContexte(ctx ?? 0),
-            m.contextWindow > 0
-              ? `${tokensCourts(m.contextTokens ?? 0)}/${tokensCourts(m.contextWindow)}`
-              : undefined,
-          )}
-          {limites.map(l => {
-            const reste = avantReset(l.resetsAt, maintenant)
-
-            return colonne(
-              NOMS[l.kind] ?? l.kind,
-              l.percentUsed,
-              couleur(l.percentUsed),
-              reste === undefined ? undefined : `↻ ${reste}`,
-            )
-          })}
-          {ouvert && m.costUsd !== undefined && (
-            <Box flexDirection="column">
-              <Button key="ouvrir-Session" label="Session" plain dimColor onPress={basculer} />
-              <Button key="valeur-Session" plain onPress={basculer}>
-                <Text bold>{m.costUsd.toFixed(2)} $</Text>
-              </Button>
-            </Box>
-          )}
-        </Box>
-        {/* La flèche, calée à droite sur la ligne des barres */}
-        <Box flexDirection="row" alignItems="center">
-          <Button
-            key="details"
-            // Triangle d'affichage du Finder de macOS : pointe à droite fermé, vers le bas ouvert
-            label={ouvert ? '▾' : '▸'}
-            plain
-            dimColor
-            onPress={basculer}
-          />
+      // Ce que dessinent les autres mods (Le Fil) passe au-dessus de La Jauge
+      <Box flexDirection="column">
+        {dessous}
+        <Box flexDirection="row" alignItems="flex-start" columnGap={3}>
+          <Box flexDirection="row" alignItems="flex-start" columnGap={3} flexGrow={1}>
+            {colonne(
+              'Contexte',
+              ctx,
+              couleurContexte(ctx ?? 0),
+              m.contextWindow > 0
+                ? `${tokensCourts(m.contextTokens ?? 0)}/${tokensCourts(m.contextWindow)}`
+                : undefined,
+            )}
+            {limites.map(l => {
+              const reste = avantReset(l.resetsAt, maintenant)
+  
+              return colonne(
+                NOMS[l.kind] ?? l.kind,
+                l.percentUsed,
+                couleur(l.percentUsed),
+                reste === undefined ? undefined : `↻ ${reste}`,
+              )
+            })}
+            {ouvert && m.costUsd !== undefined && (
+              <Box flexDirection="column">
+                <Button key="ouvrir-Session" label="Session" plain dimColor onPress={basculer} />
+                <Button key="valeur-Session" plain onPress={basculer}>
+                  <Text bold>{m.costUsd.toFixed(2)} $</Text>
+                </Button>
+              </Box>
+            )}
+          </Box>
+          {/* La flèche, calée à droite sur la ligne des barres */}
+          <Box flexDirection="row" alignItems="center">
+            <Button
+              key="details"
+              // Triangle d'affichage du Finder de macOS : pointe à droite fermé, vers le bas ouvert
+              label={ouvert ? '▾' : '▸'}
+              plain
+              dimColor
+              onPress={basculer}
+            />
+          </Box>
         </Box>
       </Box>
     )

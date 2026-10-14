@@ -12,6 +12,7 @@ const PROPS = {
 for (const surface of ['desktop', 'terminal'] as const) {
   test(`la flèche montre les valeurs sous les barres (${surface})`, async ($, on) => {
     mock.clock(on, { now: Date.parse('2026-10-14T10:00:00Z') })
+    on('ui.render', ($, e) => $.ui.resolve(e).Box({}))
     await $.command.run({ command: 'jauge-demo', args: '' } as never)
     const vue = await $.ui.mount({ plugin: 'la-jauge', surface, component: 'AbovePrompt', props: PROPS })
 
@@ -38,6 +39,7 @@ for (const surface of ['desktop', 'terminal'] as const) {
 for (const surface of ['desktop', 'terminal'] as const) {
   test(`un clic sur un libellé ouvre, un clic sur une valeur ferme (${surface})`, async ($, on) => {
     mock.clock(on, { now: Date.parse('2026-10-14T10:00:00Z') })
+    on('ui.render', ($, e) => $.ui.resolve(e).Box({}))
     await $.command.run({ command: 'jauge-demo', args: '' } as never)
     const vue = await $.ui.mount({ plugin: 'la-jauge', surface, component: 'AbovePrompt', props: PROPS })
 
@@ -51,6 +53,7 @@ for (const surface of ['desktop', 'terminal'] as const) {
 for (const surface of ['desktop', 'terminal'] as const) {
   test(`la bande s'affiche avant la première mesure (${surface})`, async ($, on) => {
     mock.clock(on, { now: Date.parse('2026-10-14T10:00:00Z') })
+    on('ui.render', ($, e) => $.ui.resolve(e).Box({}))
     const vue = await $.ui.mount({ plugin: 'la-jauge', surface, component: 'AbovePrompt', props: PROPS })
 
     expect(await vue.find({ text: /Contexte/ })).toBeDefined()
