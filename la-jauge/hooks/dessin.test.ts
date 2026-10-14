@@ -10,7 +10,7 @@ const PROPS = {
 }
 
 for (const surface of ['desktop', 'terminal'] as const) {
-  test(`la flèche montre les valeurs sous les barres (${surface})`, async ($, on) => {
+  test(`un clic déplie les valeurs sous les barres (${surface})`, async ($, on) => {
     mock.clock(on, { now: Date.parse('2026-10-14T10:00:00Z') })
     on('ui.render', ($, e) => $.ui.resolve(e).Box({}))
     await $.command.run({ command: 'jauge-demo', args: '' } as never)
@@ -20,19 +20,20 @@ for (const surface of ['desktop', 'terminal'] as const) {
     expect(await vue.find({ text: /7 jours/ })).toBeDefined()
     expect(await vue.find({ text: /20%/ })).toBeUndefined()
     if (surface === 'desktop') {
-      expect((await vue.findAll({ type: 'Svg' })).length).toBe(3)
+      // Trois barres, chacune en trois morceaux : bout gauche, milieu étiré, bout droit
+      expect((await vue.findAll({ type: 'Svg' })).length).toBe(9)
     }
 
-    await vue.press({ key: 'details' })
+    await vue.press({ key: 'ouvrir-Contexte' })
     expect(await vue.find({ text: /20%/ })).toBeDefined()
     expect(await vue.find({ text: /40k\/200k/ })).toBeDefined()
     expect(await vue.find({ text: /↻ 2 h 05/ })).toBeDefined()
-    expect(await vue.find({ text: /^Session$/ })).toBeDefined()
+    expect(await vue.find({ text: /Session/ })).toBeDefined()
     expect(await vue.find({ text: /1\.23 \$/ })).toBeDefined()
 
-    await vue.press({ key: 'details' })
+    await vue.press({ key: 'ouvrir-Contexte' })
     expect(await vue.find({ text: /20%/ })).toBeUndefined()
-    expect(await vue.find({ text: /^Session$/ })).toBeUndefined()
+    expect(await vue.find({ text: /Session/ })).toBeUndefined()
   })
 }
 
@@ -57,7 +58,7 @@ for (const surface of ['desktop', 'terminal'] as const) {
     const vue = await $.ui.mount({ plugin: 'la-jauge', surface, component: 'AbovePrompt', props: PROPS })
 
     expect(await vue.find({ text: /Contexte/ })).toBeDefined()
-    await vue.press({ key: 'details' })
+    await vue.press({ key: 'ouvrir-Contexte' })
     expect(await vue.find({ text: /—/ })).toBeDefined()
   })
 }

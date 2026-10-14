@@ -1,7 +1,7 @@
 import { expect, test } from 'claude-code/testing'
 
 import type { Tache } from '../types'
-import { actionDe, avancement, capsule, duree, etatVu, titreDe, visible } from './register'
+import { actionDe, avancement, avecAction, duree, etatVu, texteDe, titreDe, visible } from './register'
 
 const base: Tache = { session: 's', titre: 'T', debut: 0, vu: 0, etat: 'en_cours', actions: 0 }
 
@@ -41,10 +41,28 @@ test('une tâche finie ou fermée disparaît', async () => {
   expect(visible({ ...base, masquee: true }, 0)).toBe(false)
 })
 
-test("la capsule est fine et suit l'avancement", async () => {
-  const svg = capsule({ percent: 40, teinte: '#AF52DE', phase: 0 })
-  expect(svg).toContain('height="8"')
-  expect(svg).toContain('width="72"')
-  expect(svg).toContain('#AF52DE')
-  expect(capsule({ teinte: '#AF52DE', phase: 0 })).toContain('x="-63"')
+
+test("les messages de l'app ne deviennent pas des titres", async () => {
+  expect(texteDe('<system-reminder>\nThe user started…\n</system-reminder>\n')).toBe('')
+  expect(titreDe('<system-reminder>x</system-reminder> Fais le point sur le Relais')).toBe('Fais le point sur le Relais')
+  expect(titreDe('Compare a < b et c > d')).toBe('Compare a < b et c > d')
+})
+
+test("l'historique garde les dernières actions, sans doublon", async () => {
+  let t: Tache = { ...base }
+  for (const a of ['Lit a', 'Lit a', 'Lit b', '', 'Lit c']) {
+    t = avecAction(t, a)
+  }
+  expect(t.historique).toEqual(['Lit a', 'Lit b', 'Lit c'])
+  for (let i = 0; i < 20; i++) {
+    t = avecAction(t, `Action ${i}`)
+  }
+  expect(t.historique?.length).toBe(8)
+  expect(t.historique?.[7]).toBe('Action 19')
+})
+
+test('le titre commence toujours par une majuscule', async () => {
+  expect(titreDe('oui fusionne, garde 40%')).toBe('Oui fusionne, garde 40%')
+  expect(titreDe('état du dépôt')).toBe('État du dépôt')
+  expect(titreDe('/relais')).toBe('/relais')
 })

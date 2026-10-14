@@ -5,10 +5,12 @@ import {
   TEINTES,
   avantReset,
   barre,
-  capsule,
+  bout,
   couleur,
   couleurContexte,
   mesureDemo,
+  piste,
+  remplissage,
   toMesure,
 } from './register'
 
@@ -19,12 +21,22 @@ test('la ligne du terminal suit le pourcentage', async () => {
   expect(barre(150)).toEqual([12, 0])
 })
 
-test('la capsule se remplit selon le pourcentage', async () => {
-  expect(capsule(0, TEINTES.vert)).toContain('<rect width="0"')
-  expect(capsule(50, TEINTES.vert)).toContain('<rect width="60"')
-  expect(capsule(100, TEINTES.rouge)).toContain('<rect width="120"')
-  expect(capsule(1, TEINTES.vert)).toContain('<rect width="8"')
-  expect(capsule(42, TEINTES.orange)).toContain(TEINTES.orange)
+test('la barre s’étire et se remplit selon le pourcentage', async () => {
+  expect(remplissage(0)).toEqual([0, 0])
+  expect(remplissage(42)).toEqual([0, 420])
+  expect(remplissage(150)).toEqual([0, 1000])
+  expect(piste(42, TEINTES.orange)).toContain('preserveAspectRatio="none"')
+  expect(piste(42, TEINTES.orange)).toContain('<rect x="0" width="420"')
+  expect(bout('gauche', TEINTES.vert)).toContain(TEINTES.vert)
+  expect(bout('droite', undefined)).toContain('#8E8E93')
+})
+
+test('sans plan, un segment glisse le long de la barre', async () => {
+  const [a0, a1] = remplissage(undefined, 3)
+  const [b0, b1] = remplissage(undefined, 6)
+  expect(b0).toBeGreaterThan(a0)
+  expect(a1 - a0).toBeLessThanOrEqual(350)
+  expect(b1).toBeLessThanOrEqual(1000)
 })
 
 test('les limites passent au orange puis au rouge', async () => {

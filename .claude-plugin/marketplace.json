@@ -6,12 +6,7 @@
     {
       "name": "la-jauge",
       "source": "./la-jauge",
-      "description": "Affiche au-dessus de la saisie l'état du contexte, les limites 5 h et 7 jours, leur réinitialisation et le coût de la session"
-    },
-    {
-      "name": "fil",
-      "source": "./fil",
-      "description": "Une barre de progression par tâche en cours, dans ce chat et dans les autres, avec une notification à la fin"
+      "description": "Une bande au-dessus de la saisie : la progression des tâches de tous tes chats, le contexte, les limites 5 h et 7 jours, et le Relais pour repartir d'une conversation neuve"
     }
   ]
 }

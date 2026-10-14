@@ -7,60 +7,54 @@ Mes mods pour [Claude Code](https://claude.com/claude-code).
 Dans Claude Code, depuis un terminal :
 
 ```
-/plugin install <nom-du-mod> --marketplace arakx/Claude-Mods
+/plugin install la-jauge --marketplace arakx/Claude-Mods
 ```
 
 La première fois, Claude Code demande d'ajouter le dépôt : répondre `y`, puis choisir la portée (utilisateur par défaut).
 
-## Mods
+## La Jauge (`la-jauge`)
 
-### Le Fil (`fil`)
-
-Une ligne par tâche au-dessus de la zone de saisie, du lancement jusqu'au ✓ :
+Une bande au-dessus de la zone de saisie, en une seule grille alignée, aux couleurs système de macOS :
 
 ```
-● Un plan en 5 étapes pour…            [━━━━━━━━━━──────── 29s ]  3/5 · Lit le code        40%
-✓ Analyse du Radar · autre chat         [━━━━━━━━━━━━━━━━ ✓ 1m 52s]  12 actions          100%  ✕
+Fais-moi un plan en 5 étapes…            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   1m 47s        40%
+Contexte  ━━━━━━━━━━   Limite 5 h  ━━━━━━━━━━   7 jours  ━━━━━━━━━━          Passer le relais →
 ```
 
-- **Progression réelle** : au début d'une tâche, Claude annonce son plan (nombre d'étapes) et coche chaque étape ; sans plan, la barre est animée et affiche l'action en cours.
-- **Multi-chat** : les tâches des autres chats ouverts apparaissent aussi, avec la mention « autre chat ».
-- **Fin de tâche** : ✓ vert, temps total, et une notification (un message dans l'app de bureau). La ligne reste jusqu'à ce qu'on la ferme avec ✕, ou une heure.
-- Une tâche dont le chat a été fermé en cours de route passe en ⏸ interrompue.
-
-Commande : `/fil` pour afficher ou masquer.
+Un clic sur un libellé, un titre ou une valeur déplie toute la bande :
 
 ```
-/plugin install fil --marketplace arakx/Claude-Mods
+Fais-moi un plan en 5 étapes…            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   1m 47s        40%
+                                         3/5 · Lit le code  ·  ✓ Liste les fichiers  ·  …
+Contexte  ━━━━━━━━━━   Limite 5 h  ━━━━━━━━━━   7 jours  ━━━━━━━━━━          Passer le relais →
+42% 84k/200k           31% ↻ 2 h 05             12% ↻ 3 j 3 h                     Session 1.23 $
 ```
 
-### La Jauge (`la-jauge`)
+### Le Fil : la progression des tâches
 
-Une bande au-dessus de la zone de saisie, avec une jauge en capsule pour chaque mesure (aux couleurs système de macOS) :
+- Une ligne par tâche en cours, **dans ce chat et dans les autres chats ouverts** (« · autre chat »). Sa barre s'étend de la barre « Limite 5 h » au bout de la barre « 7 jours ».
+- **Progression réelle** : au début d'une tâche, Claude annonce son plan (nombre d'étapes) et coche chaque étape ; sans plan, un segment glisse le long de la barre.
+- Dépliée, la ligne montre sous la barre l'étape en cours, les étapes cochées et les dernières actions.
+- Barre violette en cours, verte une fois finie ; à la fin, une notification (un message dans l'app de bureau). La ligne reste jusqu'à ce qu'on la ferme avec ✕, ou une heure.
+- Une tâche dont le chat a été fermé en cours de route passe en orange, « Interrompu ».
 
-```
-Contexte ━━━━━━━━──   Limite 5 h ━━────────   7 jours ━─────────                 ▸
-```
-
-Un clic sur un libellé ou sur le triangle `▸` affiche les valeurs sous chaque jauge :
-
-```
-Contexte ━━━━━━━━──   Limite 5 h ━━────────   7 jours ━─────────   Session       ▾
-42% 84k/200k          31% ↻ 2 h 05            12% ↻ 3 j 3 h        1.23 $
-```
+### Les jauges
 
 - **Contexte** : remplissage de la fenêtre de contexte — vert jusqu'à 30 %, jaune jusqu'à 40 %, orange jusqu'à 50 %, rouge au-delà.
-- **Limite 5 h** et **7 jours** : consommation de l'abonnement et temps avant réinitialisation (↻) — orange à 70 %, rouge à 90 %.
+- **Limite 5 h** et **7 jours** : consommation de l'abonnement et temps avant réinitialisation (↻) — orange à 70 %, rouge à 90 %. Visibles avec un abonnement Claude, après la première réponse.
 - **Session** : coût de la session.
 
-Sur l'app de bureau, les jauges sont des capsules arrondies ; dans un terminal, une fine ligne de couleur.
+### Le Relais : une passation, puis une conversation neuve
 
-Commandes :
+1. À partir de **60 %** de contexte, **Passer le relais →** apparaît au bout de la ligne des jauges (ou à tout moment avec `/relais`).
+2. Claude écrit la passation dans **`relais.md`**, à la racine du projet (écrasée à chaque relais) : `STATUT : CONTINUER` ou `ATTENDRE`, puis Objectif, Contraintes permanentes, Fait, Reste à faire, Points d'attention.
+3. La conversation est vidée et le message de reprise est déjà dans le champ : il suffit d'appuyer sur Entrée. Claude lit `relais.md` et reprend là où il en était.
+
+### Commandes
+
 - `/jauge` : afficher ou masquer la bande.
+- `/fil` : afficher ou masquer les lignes des tâches.
+- `/relais` : passer le relais à tout moment.
 - `/jauge-demo` : faire défiler toutes les couleurs avec des valeurs fictives pendant 12 secondes.
 
-Les limites 5 h et 7 jours n'apparaissent qu'avec un abonnement Claude, après la première réponse de la session.
-
-```
-/plugin install la-jauge --marketplace arakx/Claude-Mods
-```
+Sur l'app de bureau, les barres sont des capsules arrondies ; dans un terminal, une fine ligne de couleur.

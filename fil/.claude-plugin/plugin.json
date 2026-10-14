@@ -1,7 +1,0 @@
-{
-  "name": "fil",
-  "version": "0.1.0",
-  "author": { "name": "arakx" },
-  "description": "Une barre de progression par tâche en cours, dans ce chat et dans les autres, avec une notification à la fin",
-  "types": "./types/index.d.ts"
-}

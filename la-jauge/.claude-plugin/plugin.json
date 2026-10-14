@@ -1,7 +1,7 @@
 {
   "name": "la-jauge",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "author": { "name": "arakx" },
-  "description": "Affiche au-dessus de la saisie l'état du contexte, les limites 5 h et 7 jours, leur réinitialisation et le coût de la session",
+  "description": "Une bande au-dessus de la saisie : la progression des tâches de tous tes chats, le contexte, les limites 5 h et 7 jours, et le Relais pour repartir d'une conversation neuve",
   "types": "./types/index.d.ts"
 }
