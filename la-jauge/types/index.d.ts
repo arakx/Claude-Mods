@@ -10,6 +10,6 @@ export type Mesure = {
 
 declare module 'claude-code' {
   interface PluginState {
-    'la-jauge': { mesure: Mesure | null; now: number; isHidden: boolean; demo: number | null }
+    'la-jauge': { mesure: Mesure | null; now: number; isHidden: boolean; isOpen: boolean; demo: number | null }
   }
 }

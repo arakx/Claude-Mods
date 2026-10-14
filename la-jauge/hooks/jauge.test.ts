@@ -1,27 +1,45 @@
 import { expect, test } from 'claude-code/testing'
 
-import { DEMO, avantReset, barre, couleur, couleurContexte, mesureDemo, toMesure } from './register'
+import {
+  DEMO,
+  TEINTES,
+  avantReset,
+  barre,
+  capsule,
+  couleur,
+  couleurContexte,
+  mesureDemo,
+  toMesure,
+} from './register'
 
-test('la barre suit le pourcentage', async () => {
-  expect(barre(0)).toBe('░░░░░░░░░░')
-  expect(barre(50)).toBe('█████░░░░░')
-  expect(barre(100)).toBe('██████████')
-  expect(barre(150)).toBe('██████████')
+test('la ligne du terminal suit le pourcentage', async () => {
+  expect(barre(0)).toEqual([0, 12])
+  expect(barre(50)).toEqual([6, 6])
+  expect(barre(100)).toEqual([12, 0])
+  expect(barre(150)).toEqual([12, 0])
 })
 
-test('la couleur passe au orange puis au rouge', async () => {
-  expect(couleur(30)).toBe('success')
-  expect(couleur(75)).toBe('warning')
-  expect(couleur(95)).toBe('error')
+test('la capsule se remplit selon le pourcentage', async () => {
+  expect(capsule(0, TEINTES.vert)).toContain('<rect width="0"')
+  expect(capsule(50, TEINTES.vert)).toContain('<rect width="60"')
+  expect(capsule(100, TEINTES.rouge)).toContain('<rect width="120"')
+  expect(capsule(1, TEINTES.vert)).toContain('<rect width="8"')
+  expect(capsule(42, TEINTES.orange)).toContain(TEINTES.orange)
+})
+
+test('les limites passent au orange puis au rouge', async () => {
+  expect(couleur(30)).toBe(TEINTES.vert)
+  expect(couleur(75)).toBe(TEINTES.orange)
+  expect(couleur(95)).toBe(TEINTES.rouge)
 })
 
 test('le contexte a ses propres paliers', async () => {
-  expect(couleurContexte(30)).toBe('success')
-  expect(couleurContexte(31)).toBe('#E5C100')
-  expect(couleurContexte(40)).toBe('#E5C100')
-  expect(couleurContexte(41)).toBe('#FF8C00')
-  expect(couleurContexte(50)).toBe('#FF8C00')
-  expect(couleurContexte(51)).toBe('error')
+  expect(couleurContexte(30)).toBe(TEINTES.vert)
+  expect(couleurContexte(31)).toBe(TEINTES.jaune)
+  expect(couleurContexte(40)).toBe(TEINTES.jaune)
+  expect(couleurContexte(41)).toBe(TEINTES.orange)
+  expect(couleurContexte(50)).toBe(TEINTES.orange)
+  expect(couleurContexte(51)).toBe(TEINTES.rouge)
 })
 
 test('le temps avant réinitialisation se lit en clair', async () => {
@@ -48,5 +66,5 @@ test('la mesure reprend contexte, limites et coût', async () => {
 
 test('la démo passe par toutes les couleurs du contexte', async () => {
   const couleurs = DEMO.map((_, i) => couleurContexte(mesureDemo(i, 0).contextPercent ?? 0))
-  expect(couleurs).toEqual(['success', '#E5C100', '#FF8C00', 'error'])
+  expect(couleurs).toEqual([TEINTES.vert, TEINTES.jaune, TEINTES.orange, TEINTES.rouge])
 })

@@ -6,6 +6,7 @@ import type { Limite, Mesure } from '../types'
 const mesure = atom({ plugin: 'la-jauge', key: 'mesure' } as const, null)
 const now = atom({ plugin: 'la-jauge', key: 'now' } as const, 0)
 const isHidden = atom({ plugin: 'la-jauge', key: 'isHidden' } as const, false)
+const isOpen = atom({ plugin: 'la-jauge', key: 'isOpen' } as const, false)
 const demo = atom({ plugin: 'la-jauge', key: 'demo' } as const, null)
 
 // Étapes de /jauge-demo : contexte, limite 5 h, 7 jours
@@ -46,18 +47,48 @@ export const toMesure = (e: Pick<SessionMeasureInput, 'context' | 'rateLimits' |
   costUsd: e.cost?.usd,
 })
 
-export const barre = (percent: number, largeur = 10): string => {
-  const plein = Math.max(0, Math.min(largeur, Math.round((percent / 100) * largeur)))
+// Couleurs système d'Apple
+export const TEINTES = { vert: '#34C759', jaune: '#FFCC00', orange: '#FF9500', rouge: '#FF3B30' }
 
-  return '█'.repeat(plein) + '░'.repeat(largeur - plein)
+const borne = (percent: number) => Math.max(0, Math.min(100, percent))
+
+// Terminal : nombre de traits pleins et vides
+export const barre = (percent: number, largeur = 12): [number, number] => {
+  const plein = Math.round((borne(percent) / 100) * largeur)
+
+  return [plein, largeur - plein]
+}
+
+// Bureau : capsule arrondie, piste grise translucide, remplissage en dégradé avec un reflet
+export const capsule = (percent: number, teinte: string, largeur = 120, hauteur = 8): string => {
+  const r = hauteur / 2
+  const p = borne(percent)
+  const rempli = p === 0 ? 0 : Math.max(hauteur, (p / 100) * largeur)
+
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${largeur}" height="${hauteur}" viewBox="0 0 ${largeur} ${hauteur}">` +
+    `<defs>` +
+    `<linearGradient id="g" x1="0" y1="0" x2="1" y2="0">` +
+    `<stop offset="0" stop-color="${teinte}" stop-opacity="0.75"/>` +
+    `<stop offset="1" stop-color="${teinte}"/>` +
+    `</linearGradient>` +
+    `<clipPath id="c"><rect width="${largeur}" height="${hauteur}" rx="${r}"/></clipPath>` +
+    `</defs>` +
+    `<g clip-path="url(#c)">` +
+    `<rect width="${largeur}" height="${hauteur}" fill="#8E8E93" fill-opacity="0.22"/>` +
+    `<rect width="${rempli}" height="${hauteur}" rx="${r}" fill="url(#g)"/>` +
+    `<rect width="${rempli}" height="${r}" rx="${r / 2}" fill="#FFFFFF" fill-opacity="0.22"/>` +
+    `</g>` +
+    `</svg>`
+  )
 }
 
 export const couleur = (percent: number) =>
-  percent >= 90 ? 'error' : percent >= 70 ? 'warning' : 'success'
+  percent >= 90 ? TEINTES.rouge : percent >= 70 ? TEINTES.orange : TEINTES.vert
 
 // Paliers propres au contexte : vert, jaune, orange, rouge
 export const couleurContexte = (percent: number) =>
-  percent <= 30 ? 'success' : percent <= 40 ? '#E5C100' : percent <= 50 ? '#FF8C00' : 'error'
+  percent <= 30 ? TEINTES.vert : percent <= 40 ? TEINTES.jaune : percent <= 50 ? TEINTES.orange : TEINTES.rouge
 
 export const avantReset = (resetsAt: string | undefined, maintenant: number): string | undefined => {
   if (!resetsAt) {
@@ -145,40 +176,93 @@ export const register: Register = on => {
     if (e.props.hasSurvey || m === null || (await read($, isHidden))) {
       return next(e)
     }
-    const { Box, Text } = $.ui.resolve(e)
+    const ouvert = await read($, isOpen)
+    const table = $.ui.resolve(e)
+    const { Box, Button, Text } = table
+    const Svg = e.surface !== 'terminal' && 'Svg' in table ? table.Svg : undefined
+
+    const jauge = (percent: number, teinte: string) => {
+      if (Svg) {
+        return <Svg source={capsule(percent, teinte, 100)} alt={`${percent} %`} width={100} height={8} />
+      }
+      const [plein, vide] = barre(percent, 10)
+
+      return (
+        <Text>
+          <Text color={teinte}>{'━'.repeat(plein)}</Text>
+          <Text dimColor>{'━'.repeat(vide)}</Text>
+        </Text>
+      )
+    }
+
+    // Un clic sur un libellé ou sur le triangle ouvre ou ferme les valeurs
+    const basculer = () => update($, isOpen, o => !o)
+
+    // Une colonne par mesure : le nom et la barre, puis la valeur dessous quand la flèche est ouverte
+    const colonne = (nom: string, percent: number | undefined, teinte: string, detail: string | undefined) => (
+      <Box flexDirection="column">
+        <Box flexDirection="row" alignItems="center" columnGap={1}>
+          <Button key={`ouvrir-${nom}`} label={nom} plain dimColor onPress={basculer} />
+          {jauge(percent ?? 0, teinte)}
+        </Box>
+        {ouvert && (
+          // Même bouton discret que le libellé : même marge, donc même alignement
+          <Button key={`valeur-${nom}`} plain onPress={basculer}>
+            {percent === undefined ? (
+              <Text dimColor>—</Text>
+            ) : (
+              <Text color={teinte} bold>
+                {percent}%
+              </Text>
+            )}
+            {detail !== undefined && <Text dimColor> {detail}</Text>}
+          </Button>
+        )}
+      </Box>
+    )
 
     const ctx = m.contextPercent
     const limites = [...m.limites].sort((a, b) => ordre(a) - ordre(b))
 
     return (
-      <Box flexDirection="row" flexWrap="wrap" columnGap={2}>
-        <Text>
-          <Text dimColor>Contexte </Text>
-          {ctx === undefined ? (
-            <Text dimColor>— / {tokensCourts(m.contextWindow)}</Text>
-          ) : (
-            <Text color={couleurContexte(ctx)}>
-              {barre(ctx)} {ctx}% ({tokensCourts(m.contextTokens ?? 0)}/{tokensCourts(m.contextWindow)})
-            </Text>
+      <Box flexDirection="row" alignItems="flex-start" columnGap={3}>
+        <Box flexDirection="row" alignItems="flex-start" columnGap={3} flexGrow={1}>
+          {colonne(
+            'Contexte',
+            ctx,
+            couleurContexte(ctx ?? 0),
+            `${tokensCourts(m.contextTokens ?? 0)}/${tokensCourts(m.contextWindow)}`,
           )}
-        </Text>
-        {limites.map(l => {
-          const reste = avantReset(l.resetsAt, maintenant)
+          {limites.map(l => {
+            const reste = avantReset(l.resetsAt, maintenant)
 
-          return (
-            <Text>
-              <Text dimColor>{NOMS[l.kind] ?? l.kind} </Text>
-              <Text color={couleur(l.percentUsed)}>{l.percentUsed}%</Text>
-              {reste !== undefined && <Text dimColor> ↻ {reste}</Text>}
-            </Text>
-          )
-        })}
-        {m.costUsd !== undefined && (
-          <Text>
-            <Text dimColor>Session </Text>
-            <Text>{m.costUsd.toFixed(2)} $</Text>
-          </Text>
-        )}
+            return colonne(
+              NOMS[l.kind] ?? l.kind,
+              l.percentUsed,
+              couleur(l.percentUsed),
+              reste === undefined ? undefined : `↻ ${reste}`,
+            )
+          })}
+          {ouvert && m.costUsd !== undefined && (
+            <Box flexDirection="column">
+              <Button key="ouvrir-Session" label="Session" plain dimColor onPress={basculer} />
+              <Button key="valeur-Session" plain onPress={basculer}>
+                <Text bold>{m.costUsd.toFixed(2)} $</Text>
+              </Button>
+            </Box>
+          )}
+        </Box>
+        {/* La flèche, calée à droite sur la ligne des barres */}
+        <Box flexDirection="row" alignItems="center">
+          <Button
+            key="details"
+            // Triangle d'affichage du Finder de macOS : pointe à droite fermé, vers le bas ouvert
+            label={ouvert ? '▾' : '▸'}
+            plain
+            dimColor
+            onPress={basculer}
+          />
+        </Box>
       </Box>
     )
   })
