@@ -1,0 +1,12 @@
+{
+  "name": "claude-mods",
+  "owner": { "name": "arakx" },
+  "description": "Les mods Claude Code d'arakx",
+  "plugins": [
+    {
+      "name": "la-jauge",
+      "source": "./la-jauge",
+      "description": "Affiche au-dessus de la saisie l'état du contexte, les limites 5 h et 7 jours, leur réinitialisation et le coût de la session"
+    }
+  ]
+}

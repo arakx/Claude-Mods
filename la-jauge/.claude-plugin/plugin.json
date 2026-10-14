@@ -1,0 +1,7 @@
+{
+  "name": "la-jauge",
+  "version": "0.1.0",
+  "author": { "name": "arakx" },
+  "description": "Affiche au-dessus de la saisie l'état du contexte, les limites 5 h et 7 jours, leur réinitialisation et le coût de la session",
+  "types": "./types/index.d.ts"
+}
