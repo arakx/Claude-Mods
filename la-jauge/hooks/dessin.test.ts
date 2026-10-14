@@ -47,3 +47,14 @@ for (const surface of ['desktop', 'terminal'] as const) {
     expect(await vue.find({ text: /↻ 2 h 05/ })).toBeUndefined()
   })
 }
+
+for (const surface of ['desktop', 'terminal'] as const) {
+  test(`la bande s'affiche avant la première mesure (${surface})`, async ($, on) => {
+    mock.clock(on, { now: Date.parse('2026-10-14T10:00:00Z') })
+    const vue = await $.ui.mount({ plugin: 'la-jauge', surface, component: 'AbovePrompt', props: PROPS })
+
+    expect(await vue.find({ text: /Contexte/ })).toBeDefined()
+    await vue.press({ key: 'details' })
+    expect(await vue.find({ text: /—/ })).toBeDefined()
+  })
+}

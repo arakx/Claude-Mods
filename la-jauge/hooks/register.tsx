@@ -33,6 +33,9 @@ export const mesureDemo = (etape: number, maintenant: number): Mesure => {
   }
 }
 
+// Avant la première mesure : barres vides, pas de valeurs
+const VIDE: Mesure = { contextWindow: 0, limites: [] }
+
 const NOMS: Record<string, string> = {
   five_hour: 'Limite 5 h',
   seven_day: '7 jours',
@@ -128,14 +131,21 @@ export const register: Register = on => {
     await update($, demo, () => null)
     const t = await $.clock.now()
     await update($, now, () => t)
-    const usage = await $.session.usage()
-    await update($, mesure, () => toMesure(usage))
     // Le compte à rebours avance même sans nouvelle réponse
     $.clock.every(60_000, () => {
       void $.clock.now().then(t2 => update($, now, () => t2))
     })
+    const demarre = await next(e)
+    // Au tout début d'une session les chiffres peuvent manquer : la bande s'affiche vide
+    // et session.measure la remplit dès la première mesure
+    try {
+      const usage = await $.session.usage()
+      await update($, mesure, () => toMesure(usage))
+    } catch {
+      // rien à faire : on attend session.measure
+    }
 
-    return next(e)
+    return demarre
   })
 
   on('session.measure', async ($, e, next) => {
@@ -172,8 +182,8 @@ export const register: Register = on => {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const etape = await read($, demo)
     const maintenant = (await read($, now)) || (await $.clock.now())
-    const m = etape === null ? await read($, mesure) : mesureDemo(etape, maintenant)
-    if (e.props.hasSurvey || m === null || (await read($, isHidden))) {
+    const m = etape === null ? ((await read($, mesure)) ?? VIDE) : mesureDemo(etape, maintenant)
+    if (e.props.hasSurvey || (await read($, isHidden))) {
       return next(e)
     }
     const ouvert = await read($, isOpen)
@@ -231,7 +241,9 @@ export const register: Register = on => {
             'Contexte',
             ctx,
             couleurContexte(ctx ?? 0),
-            `${tokensCourts(m.contextTokens ?? 0)}/${tokensCourts(m.contextWindow)}`,
+            m.contextWindow > 0
+              ? `${tokensCourts(m.contextTokens ?? 0)}/${tokensCourts(m.contextWindow)}`
+              : undefined,
           )}
           {limites.map(l => {
             const reste = avantReset(l.resetsAt, maintenant)
