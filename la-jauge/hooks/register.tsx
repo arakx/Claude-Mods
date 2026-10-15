@@ -805,10 +805,14 @@ export const register: Register = on => {
       </Box>
     )
 
+    // Ce que dessinent les mods placés après La Jauge (Plume…) vient en dessous
+    const dessous = await next(e)
+
     return (
       <Box flexDirection="column">
         {liste.map(ligneTache)}
         {ligneJauges}
+        {dessous}
       </Box>
     )
   })

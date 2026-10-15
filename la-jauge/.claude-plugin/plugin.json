@@ -1,6 +1,6 @@
 {
   "name": "la-jauge",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "author": { "name": "arakx" },
   "description": "Une bande au-dessus de la saisie : la progression des tâches de tous tes chats, le contexte, les limites 5 h et 7 jours, et le Relais pour repartir d'une conversation neuve",
   "types": "./types/index.d.ts"
