@@ -14,6 +14,9 @@ export type Phase = 'repos' | 'redaction' | 'pret'
 // Fil — une tâche par chat, partagée entre les chats par un fichier dans ~/.claude/fil
 export type Etat = 'en_cours' | 'termine' | 'interrompu' | 'erreur'
 
+// Un sous-agent lancé par la tâche, affiché en retrait sous elle tant qu'il travaille
+export type SousAgent = { id: string; nom: string; debut: number; vu: number; action?: string }
+
 export type Tache = {
   session: string
   titre: string
@@ -30,6 +33,8 @@ export type Tache = {
   historique?: string[]
   // Fermée avec ✕ : plus affichée dans aucun chat
   masquee?: boolean
+  // Sous-agents en cours
+  agents?: SousAgent[]
 }
 
 declare module 'claude-code' {

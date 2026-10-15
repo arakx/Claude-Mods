@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, SessionMeasureInput } from 'claude-code'
 
-import type { Etat, Limite, Mesure, Phase, Tache } from '../types'
+import type { Etat, Limite, Mesure, Phase, SousAgent, Tache } from '../types'
 
 // La Jauge dessine toute la bande au-dessus de la zone de saisie, dans une seule grille :
 // une ligne par tâche (le Fil), puis la ligne des jauges, avec le Relais au bout.
@@ -39,6 +39,9 @@ const GARDE_MS = 60 * 60_000
 const LIGNES_MAX = 4
 const HISTORIQUE_MAX = 8
 const TITRE_MAX = 34
+// Un sous-agent muet depuis 10 minutes est oublié (fin jamais signalée)
+const AGENT_MUET_MS = 10 * 60_000
+const AGENTS_MAX = 3
 
 const CONSIGNE = [
   'La bande au-dessus de la zone de saisie (mod « La Jauge ») affiche la progression de ton travail.',
@@ -457,7 +460,9 @@ export const register: Register = on => {
         const maintenant = await $.clock.now()
         await update($, now, () => maintenant)
         if (S.courante?.etat === 'en_cours' && maintenant - S.courante.vu > 10_000) {
-          S.courante = { ...S.courante, vu: maintenant }
+          // Au passage, oublie les sous-agents muets depuis trop longtemps
+          const agents = S.courante.agents?.filter(a => maintenant - a.vu <= AGENT_MUET_MS)
+          S.courante = { ...S.courante, vu: maintenant, agents: agents?.length ? agents : undefined }
           await ecrire($, S.courante)
         }
         await rafraichir($, maintenant)
@@ -525,7 +530,33 @@ export const register: Register = on => {
     return { result: 'ok' }
   })
 
+  // Un sous-agent démarre : il prend une ligne en retrait sous la tâche
+  on('agent.spawn', async ($, e, next) => {
+    const r = await next(e)
+    if (r.agentId) {
+      const t = await $.clock.now()
+      S.courante ??= { session: S.moi, titre: 'Tâche', debut: t, vu: t, etat: 'en_cours', actions: 0 }
+      const agent: SousAgent = { id: r.agentId, nom: e.description || e.subagentType, debut: t, vu: t }
+      S.courante = { ...S.courante, vu: t, agents: [...(S.courante.agents ?? []).filter(a => a.id !== agent.id), agent] }
+      await publier($)
+    }
+
+    return r
+  })
+
   on('tool.call', async ($, e, next) => {
+    // Une action d'un sous-agent : elle s'affiche sur sa ligne, pas dans l'historique de la tâche
+    if (e.agentId) {
+      const agents = S.courante?.agents
+      if (S.courante && agents?.some(a => a.id === e.agentId)) {
+        const t = await $.clock.now()
+        const action = actionDe(e.tool, e as unknown as Record<string, unknown>)
+        S.courante = { ...S.courante, agents: agents.map(a => (a.id === e.agentId ? { ...a, action, vu: t } : a)) }
+        await publier($)
+      }
+
+      return next(e)
+    }
     if (e.tool !== OUTIL && S.courante?.etat === 'en_cours') {
       const action = actionDe(e.tool, e as unknown as Record<string, unknown>)
       S.courante = avecAction(
@@ -538,8 +569,36 @@ export const register: Register = on => {
     return next(e)
   })
 
+  // Claude reprend la main sans nouveau message (un agent en arrière-plan vient de rendre son travail) :
+  // la tâche continue
+  on('turn.start', async ($, e, next) => {
+    if (!e.text && S.courante && S.courante.etat !== 'en_cours' && !S.courante.masquee) {
+      const t = await $.clock.now()
+      S.courante = { ...S.courante, etat: 'en_cours', fin: undefined, vu: t }
+      await publier($)
+    }
+
+    return next(e)
+  })
+
   on('turn.complete', async ($, e, next) => {
     const r = await next(e)
+    // La fin d'un agent n'est pas la fin de la tâche : seule sa ligne s'en va
+    if (e.agentId) {
+      if (S.courante?.agents?.some(a => a.id === e.agentId)) {
+        S.courante = { ...S.courante, agents: S.courante.agents.filter(a => a.id !== e.agentId) }
+        await publier($)
+      }
+
+      return r
+    }
+    // Des agents tournent encore en arrière-plan : la tâche attend leur retour
+    if (S.courante?.etat === 'en_cours' && e.reason === 'answer' && (S.courante.agents?.length ?? 0) > 0) {
+      S.courante = { ...S.courante, vu: await $.clock.now(), actuelle: S.courante.total ? S.courante.actuelle : 'Attend les agents…' }
+      await publier($)
+
+      return r
+    }
     // Fil : la tâche de ce chat est terminée
     if (S.courante?.etat === 'en_cours') {
       const t = await $.clock.now()
@@ -551,6 +610,7 @@ export const register: Register = on => {
         vu: t,
         faites: etat === 'termine' && S.courante.total ? S.courante.total : S.courante.faites,
         actuelle: etat === 'termine' ? undefined : S.courante.actuelle,
+        agents: undefined,
       }
       await publier($)
       if (etat === 'termine') {
@@ -696,6 +756,28 @@ export const register: Register = on => {
           ? `${Math.min((t.faites ?? 0) + 1, t.total)}/${t.total}${t.actuelle ? ` · ${t.actuelle}` : ''}`
           : undefined
       const actions = [...(etapes ? [etapes] : []), ...[...(t.historique ?? [])].reverse()]
+      const agents = (t.agents ?? []).slice(0, AGENTS_MAX)
+      // Un sous-agent : son nom sous le titre, sa dernière action sous la barre, son temps à droite
+      const ligneAgent = (a: SousAgent) => (
+        <Box key={`agent-${a.id}`} flexDirection="row" alignItems="center">
+          {caseG(
+            LARGEUR_TITRE,
+            <Text dimColor wrap="truncate-end">
+              <Text color={TEINTES.violet}>{'  ↳ '}</Text>
+              {titreDe(a.nom, Math.max(8, titreMax - 4))}
+            </Text>,
+          )}
+          {caseG(
+            LARGEUR_FIL,
+            <Text dimColor wrap="truncate-end">
+              {a.action ?? 'Démarre…'}
+            </Text>,
+          )}
+          <Box width={pc(GRILLE.droite)} flexDirection="row">
+            <Text dimColor>{duree(maintenant - a.debut)}</Text>
+          </Box>
+        </Box>
+      )
 
       return (
         <Box key={`tache-${t.session}`} flexDirection="column">
@@ -723,6 +805,12 @@ export const register: Register = on => {
               )}
             </Box>
           </Box>
+          {etat === 'en_cours' && agents.map(ligneAgent)}
+          {etat === 'en_cours' && (t.agents?.length ?? 0) > AGENTS_MAX && (
+            <Box flexDirection="row">
+              <Text dimColor>{`  ↳ + ${(t.agents?.length ?? 0) - AGENTS_MAX} autres agents`}</Text>
+            </Box>
+          )}
           {ouvert && (
             <Box flexDirection="row">
               <Box width={pc(LARGEUR_TITRE)} flexShrink={0} />

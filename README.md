@@ -35,6 +35,7 @@ Contexte  ━━━━━━━━━━   Limite 5 h  ━━━━━━━━�
 
 - Une ligne par tâche en cours, **dans ce chat et dans les autres chats ouverts** (« · autre chat »). Sa barre s'étend de la barre « Limite 5 h » au bout de la barre « 7 jours ».
 - **Progression réelle** : au début d'une tâche, Claude annonce son plan (nombre d'étapes) et coche chaque étape ; sans plan, un segment glisse le long de la barre.
+- **Sous-agents** : chaque agent lancé par la tâche a sa ligne en retrait (« ↳ »), avec sa dernière action et son temps ; elle disparaît quand il a fini. La tâche reste en cours tant que des agents travaillent encore.
 - Dépliée, la ligne montre sous la barre l'étape en cours, les étapes cochées et les dernières actions.
 - Barre violette en cours, verte une fois finie ; à la fin, une notification (un message dans l'app de bureau). La ligne reste jusqu'à ce qu'on la ferme avec ✕, ou une heure.
 - Une tâche dont le chat a été fermé en cours de route passe en orange, « Interrompu ».
